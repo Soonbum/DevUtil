@@ -1,0 +1,34 @@
+﻿/****************************************************************************/
+/*                                                                          */
+/*            TODO: write some descriptive text about your project          */
+/*                               (GRC resources)                            */
+/*                                                                          */
+/****************************************************************************/
+
+@#define	INT__APP
+@#define	INTERNAL_NAME	"Dev Utility"
+@#define	ORIGINAL_NAME	"Dev Utility.apx"
+@
+@#define	COMPANY_STR		""
+@#define	COPYRIGHT_STR	""
+@#define	FILEDESC_STR	"Dev Utility Add-on"
+@
+
+'STR#' 32000 "Add-on Name and Description" {
+/* [  1] */		"Dev Utility"
+/* [  2] */		"Utility tools for development"
+}
+
+
+'STR#' 32500 "Menu strings" {
+/* [   ] */		"Dev Util"
+/* [   ] */		"Coordinates"
+/* [  1] */			"좌표 객체 자동 배치^E3^ES^EE^EI"
+}
+
+
+'STR#' 32520 "Status bar strings" {
+/* [   ] */		"Dev Util"
+/* [   ] */		"Coordinates"
+/* [  1] */			"좌표를 알려주는 객체를 자동 배치합니다."
+}

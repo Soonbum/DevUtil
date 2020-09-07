@@ -1,0 +1,39 @@
+﻿/****************************************************************************/
+/*                                                                          */
+/*            TODO: write some descriptive text about your project          */
+/*                       (non-localized GRC resources)                      */
+/*                                                                          */
+/****************************************************************************/
+
+@#include "GSLocalization.h"
+@
+
+/* TODO: replace the first ID with your developer ID and the second ID with */
+/*       your local ID                                                      */
+
+'MDID' 32500 "Add-On Identifier" {
+	829517673
+	3897128265
+}
+
+'GICN' 32502 "Layers" {
+           0  128  128
+}
+
+/* ---------------------------------------------------------- place "Coordinate" objects on vertices (target: Polyline, Morph) */
+'GDLG'  32500  Modal | grow	  0		  0		250		230		"Place the Coordinate Object" {
+/* [  1] */	Button			 40		175		 70		 25		LargePlain		"Place"
+/* [  2] */ Button			130		175		 70		 25		LargePlain		"Exit"
+
+/* [  3] */ Icon			 26		 20		 29		 14  	32502
+/* [  4] */ UserControl		 60		 15		160		 25		257	0x0006 0x0000 0		/* Layer Control */
+
+/* [  5] */ CheckBox		 25		 50		 70		 20		LargePlain		"Local Orig"
+/* [  6] */ Button			100		 47		120		 25		LargePlain		"Select Orig"
+
+/* [  7] */ Button			 60		 80		160		 25		LargePlain		"Select Object"
+/* [  8] */ CenterText		 60		110		160		 20		LargePlain		"Polyline, Morph"
+
+/* [  9] */ LeftText		 25		140		 70		 20		LargePlain		"Font Size"
+/* [ 10] */ LengthEdit		100		135		 70		 20		LargePlain		"0.010"		"10"
+}

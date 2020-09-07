@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{b9a3cbe7-a020-4710-88cd-1d2ad16b1cf2}</UniqueIdentifier>
+      <Extensions>c;cpp;cc;cxx;cp</Extensions>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{208059ab-b748-4d8d-9c39-6fe47801f80d}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hp</Extensions>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{23d07831-1e62-4839-8d2a-1995725ee609}</UniqueIdentifier>
+      <Extensions>r;res;rc;rc2;grc;ico;cur;bmp;gif;jpg;jpeg</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Src\DevUtility.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\ACAPinc.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\ACAPinc_dll.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\APICommon.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\APIEnvir.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Src\DevUtility.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\APICommon.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="RINT\DevUtility.grc">
+      <Filter>Resources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RFIX\DevUtilityFix.grc">
+      <Filter>Resources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RFIX.WIN\DevUtility.rc2">
+      <Filter>Resources</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\..\..\..\..\Program Files\Graphisoft\API Development Kit 19.3003\Support\Lib\Win\ACAP_STAT.lib" />
+    <Library Include="..\..\..\..\..\..\..\Program Files\Graphisoft\API Development Kit 19.3003\Support\Modules\GSRoot\Win\GSRootImp.lib" />
+    <Library Include="..\..\..\..\..\..\..\Program Files\Graphisoft\API Development Kit 19.3003\Support\Modules\GSUtils\Win\GSUtilsImp.lib" />
+    <Library Include="..\..\..\..\..\..\..\Program Files\Graphisoft\API Development Kit 19.3003\Support\Modules\InputOutput\Win\InputOutputImp.lib" />
+    <Library Include="..\..\..\..\..\..\..\Program Files\Graphisoft\API Development Kit 19.3003\Support\Modules\DGLib\Win\DGImp.lib" />
+    <Library Include="..\..\..\..\..\..\..\Program Files\Graphisoft\API Development Kit 19.3003\Support\Modules\DGGraphix\Win\DGGraphixImp.lib" />
+    <Library Include="..\..\..\..\..\..\..\Program Files\Graphisoft\API Development Kit 19.3003\Support\Modules\UCLib\Win\UCImp.lib" />
+    <Library Include="..\..\..\..\..\..\..\Program Files\Graphisoft\API Development Kit 19.3003\Support\Modules\TextEngine\Win\TextEngineImp.lib" />
+    <Library Include="..\..\..\..\..\..\..\Program Files\Graphisoft\API Development Kit 19.3003\Support\Modules\Geometry\Win\GeometryImp.lib" />
+  </ItemGroup>
+</Project>

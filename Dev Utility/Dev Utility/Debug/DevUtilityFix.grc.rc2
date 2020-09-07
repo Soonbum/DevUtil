@@ -1,0 +1,53 @@
+
+/*---- This file was created by GRC compiler --------------------------------------------*/
+/*                                                                                       */
+/*     Source file: c:\users\maxbim\documents\visual studio 2010\Projects\Dev Utility\Dev Utility\RFIX\DevUtilityFix.grc        Code table: NUL              */
+/*                                                                                       */
+/*---- Version 2.0 - Windows ------------------------------ (c) 1996-2013 by Graphisoft -*/
+
+/*------------------ Includes ----------------------------------------------*/
+
+#include "DGDefs.h"
+
+/*------------------ Resources ---------------------------------------------*/
+
+
+#include "GSLocalization.h"
+
+32500 MDID
+BEGIN
+	8, 0,
+	0L + 829517673,
+	0L + 3897128265
+END
+
+32502	ICON 32502.ico
+
+32500 GSDG
+BEGIN
+	309, 0,
+	DG_DT_MODAL, DG_DLG_HGROW | DG_DLG_VGROW,
+	0, 0, 250, 230,
+	0x6C50,0x6361,0x2065,0x6874,0x2065,0x6F43,0x726F,0x6964,
+	0x616E,0x6574,0x4F20,0x6A62,0x6365,0x0074,
+	10,
+	  1, DG_ITM_BUTTON, DG_BT_ICONTEXT,  40, 173,  70,  29, DG_IS_LARGE | DG_IS_PLAIN,
+			0x6C50,0x6361,0x0065,
+	  2, DG_ITM_BUTTON, DG_BT_ICONTEXT, 130, 173,  70,  29, DG_IS_LARGE | DG_IS_PLAIN,
+			0x7845,0x7469,"\x00",
+	  3, DG_ITM_ICONITEM, 0,  26,  20,  29,  14, 0, 32502,
+	  4, DG_ITM_USERCONTROL, 0,  60,  15, 160,  25, 257, 3,
+			 6, 0, 0,
+	  5, DG_ITM_CHECKBOX, DG_BT_TEXT,  25,  50,  70,  20, DG_IS_LARGE | DG_IS_PLAIN,
+			0x6F4C,0x6163,0x206C,0x724F,0x6769,"\x00",
+	  6, DG_ITM_BUTTON, DG_BT_ICONTEXT, 100,  45, 120,  29, DG_IS_LARGE | DG_IS_PLAIN,
+			0x6553,0x656C,0x7463,0x4F20,0x6972,0x0067,
+	  7, DG_ITM_BUTTON, DG_BT_ICONTEXT,  60,  78, 160,  29, DG_IS_LARGE | DG_IS_PLAIN,
+			0x6553,0x656C,0x7463,0x4F20,0x6A62,0x6365,0x0074,
+	  8, DG_ITM_STATICTEXT, DG_IS_CENTER | DG_IS_VTOP | DG_IS_NOTRUNC,  60, 110, 160,  20, 0, DG_IS_LARGE | DG_IS_PLAIN,
+			0x6F50,0x796C,0x696C,0x656E,0x202C,0x6F4D,0x7072,0x0068,
+	  9, DG_ITM_STATICTEXT, DG_IS_LEFT | DG_IS_VTOP | DG_IS_NOTRUNC,  25, 140,  70,  20, 0, DG_IS_LARGE | DG_IS_PLAIN,
+			0x6F46,0x746E,0x5320,0x7A69,0x0065,
+	 10, DG_ITM_EDITTEXT, DG_ET_LENGTH | DG_ET_FRAME | DG_ET_ABSOLUTE | DG_ET_CHANGEFONT | DG_ET_UPDATE | DG_ET_EDITABLE, 100, 135,  70,  20, DG_IS_LARGE | DG_IS_PLAIN, "0.010\0", "10\0",
+END
+

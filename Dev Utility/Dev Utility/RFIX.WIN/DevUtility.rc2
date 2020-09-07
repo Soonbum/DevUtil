@@ -1,0 +1,19 @@
+/****************************************************************************/
+/*                                                                          */
+/*            TODO: write some descriptive text about your project          */
+/*                              (Win resources)                             */
+/*                                                                          */
+/****************************************************************************/
+
+#include <winver.h>
+
+#include "DGDefs.h"
+#ifdef _DEBUG
+	#include "..\Debug\DevUtility.grc.rc2"
+	#include "..\Debug\DevUtilityFix.grc.rc2"
+#else
+	#include "..\Release\DevUtility.grc.rc2"
+	#include "..\Release\DevUtilityFix.grc.rc2"
+#endif
+
+1	ICON    LOADONCALL MOVEABLE IMPURE  ACAP.ico
