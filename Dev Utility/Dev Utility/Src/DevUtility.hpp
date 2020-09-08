@@ -34,6 +34,12 @@
 #include "UC.h"
 #include "DG.h"
 #include "APICommon.h"
+#include "BM.hpp"
+#include "IOBase.hpp"
+#include "Location.hpp"
+#include "Folder.hpp"
+#include "File.hpp"
+#include "FileSystem.hpp"
 
 #ifdef WINDOWS
 	#pragma warning (default: 4068)
@@ -51,11 +57,13 @@
 
 // 변수 선언
 enum	idxItems;			// 열거형: 다이얼로그 항목 인덱스
-struct	Coords;				// 좌표 정보
 
 // 함수 선언
-GSErrCode	placeCoordinateOnTarget (void);		// 1번 메뉴: 좌표 객체를 배치하는 통합 루틴
+std::string		format_string (const std::string fmt, ...);		// std::string 변수 값에 formatted string을 입력 받음
+GSErrCode		placeCoordinateOnTarget (void);					// 1번 메뉴: 좌표 객체를 배치하는 통합 루틴
 static short	DGCALLBACK	placerHandler (short message, short dialogID, short item, DGUserData userData, DGMessageData msgData);		// DG 콜백 함수
+GSErrCode		placeCoordinateLabel (double xPos, double yPos, double zPos, bool bComment, std::string comment, short layerInd);		// 좌표 라벨을 배치함
+void			createCoordinateLibPart (void);																							// 좌표 라벨 라이브러리 파트가 없으면 만듦
 
 // 다이얼로그 항목 인덱스
 enum	idxItems {
@@ -63,15 +71,7 @@ enum	idxItems {
 	USERCONTROL_LAYER			= 4,
 	CHECKBOX_LOCALORIG			= 5,
 	BUTTON_SELECT_LOCALORIG		= 6,
-	BUTTON_SELECT_OBJECT		= 7,
-	CENTERTEXT_TARGET_OBJECT	= 8,
-	LEFTTEXT_FONTSIZE			= 9,
-	EDITCONTROL_FONTSIZE		= 10
-};
-
-// 구조체 선언
-struct Coords {
-	double	xPos;
-	double	yPos;
-	double	zPos;
+	CENTERTEXT_TARGET_OBJECT	= 7,
+	LEFTTEXT_FONTSIZE			= 8,
+	EDITCONTROL_FONTSIZE		= 9
 };

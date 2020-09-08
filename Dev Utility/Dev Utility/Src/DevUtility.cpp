@@ -11,12 +11,10 @@
 #define MDID_DEVELOPER_ID	829517673
 #define MDID_LOCAL_ID		3897128265
 
-static bool		bLocalOrigin;	// true이면 로컬 원점, false이면 글로벌 원점
-static double	szFont;			// 글꼴 크기
-static short	layerInd;		// 레이어 인덱스
-// ... 로컬 원점 좌표 구조체: Coords
-// ... vertices 리스트: Coords 배열
-// ... 객체 리스트: API_Element
+static bool					bLocalOrigin;			// true이면 로컬 원점, false이면 글로벌 원점
+static double				szFont;					// 글꼴 크기
+static short				layerInd;				// 레이어 인덱스
+static API_GetPointType		localOriginPointInfo;	// 로컬 원점
 
 /**
  * Dependency definitions. Function name is fixed.
@@ -102,15 +100,126 @@ GSErrCode __ACENV_CALL	FreeData (void)
 	return NoError;
 }		// FreeData ()
 
+// std::string 변수 값에 formatted string을 입력 받음
+std::string	format_string (const std::string fmt, ...)
+{
+	int			size = ((int)fmt.size ()) * 2;
+	va_list		ap;
+	std::string	buffer;
+
+	while (1) {
+		buffer.resize(size);
+		va_start (ap, fmt);
+		int n = vsnprintf ((char*)buffer.data (), size, fmt.c_str (), ap);
+		va_end (ap);
+
+		if (n > -1 && n < size) {
+			buffer.resize (n);
+			return buffer;
+		}
+
+		if (n > -1)
+			size = n + 1;
+		else
+			size *= 2;
+	}
+
+	return buffer;
+}
+
 // 1번 메뉴: 좌표 객체를 배치하는 통합 루틴
 GSErrCode	placeCoordinateOnTarget (void)
 {
 	GSErrCode err = NoError;
 	short	itemInd = DG_OK;
+	std::string		tempString;
 
-	while (itemInd != DG_CANCEL) {
+	// Selection Manager 관련 변수
+	API_SelectionInfo		selectionInfo;
+	API_Neig				**selNeigs;
+	long					nSel;
+	API_Element				elem;
+	API_ElementMemo			memo;
+	API_ElemInfo3D			info3D;
+
+	// 로컬 원점 정보
+	const char*			prompt_localorigin = "로컬 원점을 클릭하십시오.";
+	localOriginPointInfo.pos.x = 0;
+	localOriginPointInfo.pos.y = 0;
+	localOriginPointInfo.pos.z = 0;
+	layerInd = 1;
+	bLocalOrigin = false;
+	szFont = 0.100;
+
+	// 다이얼로그 호출
+	do {
 		itemInd = DGModalDialog (ACAPI_GetOwnResModule (), 32500, ACAPI_GetOwnResModule (), placerHandler, NULL);
+
+		// 로컬원점 선택 버튼
+		if (itemInd == BUTTON_SELECT_LOCALORIG) {
+			BNZeroMemory (&localOriginPointInfo, sizeof (API_GetPointType));
+			CHTruncate (prompt_localorigin, localOriginPointInfo.prompt, sizeof (localOriginPointInfo.prompt));
+			localOriginPointInfo.changeFilter = false;
+			localOriginPointInfo.changePlane  = false;
+			err = ACAPI_Interface (APIIo_GetPointID, &localOriginPointInfo, NULL);
+		}
+	} while (itemInd == BUTTON_SELECT_LOCALORIG);
+
+	if (itemInd != DG_OK)	return -1;	// 실행하지 않고 종료
+
+	// 선택한 요소 가져오기
+	err = ACAPI_Selection_Get (&selectionInfo, &selNeigs, true);
+	BMKillHandle ((GSHandle *) &selectionInfo.marquee.coords);
+	if (err == APIERR_NOSEL) {
+		ACAPI_WriteReport ("아무 것도 선택하지 않았습니다.", true);
+		return err;
 	}
+	if (err != NoError) {
+		BMKillHandle ((GSHandle *) &selNeigs);
+		return err;
+	}
+	BNZeroMemory (&elem, sizeof (API_Element));
+	BNZeroMemory (&memo, sizeof (API_ElementMemo));
+
+	// 좌표 객체 배치
+	if (selectionInfo.typeID != API_SelEmpty) {
+		nSel = BMGetHandleSize ((GSHandle) selNeigs) / sizeof (API_Neig);
+		for (int xx = 0 ; xx < nSel && err == NoError ; ++xx) {
+			elem.header.typeID = Neig_To_ElemID ((*selNeigs)[xx].neigID);
+			elem.header.guid = (*selNeigs)[xx].guid;
+
+			ACAPI_Element_Get (&elem);
+			ACAPI_Element_GetMemo (elem.header.guid, &memo);
+
+			// 폴리라인일 경우,
+			if (elem.header.typeID == API_PolyLineID) {
+				err = ACAPI_CallUndoableCommand ("좌표 객체 배치", [&] () -> GSErrCode {
+					for (int yy = 1 ; yy <= elem.polyLine.poly.nCoords ; ++yy) {
+						err = placeCoordinateLabel (memo.coords [0][yy].x, memo.coords [0][yy].y, 0, false, "", layerInd);
+					}
+
+					return err;
+				});
+
+			}
+
+			// 모프일 경우,
+			if (elem.header.typeID == API_MorphID) {
+				ACAPI_Element_Get3DInfo (elem.header, &info3D);
+
+				err = ACAPI_CallUndoableCommand ("좌표 객체 배치", [&] () -> GSErrCode {
+					tempString = format_string ("%s", "MIN 값");
+					err = placeCoordinateLabel (info3D.bounds.xMin, info3D.bounds.yMin, info3D.bounds.zMin, true, tempString, layerInd);
+					tempString = format_string ("%s", "MAX 값");
+					err = placeCoordinateLabel (info3D.bounds.xMax, info3D.bounds.yMax, info3D.bounds.zMax, true, tempString, layerInd);
+
+					return err;
+				});
+			}
+		}
+	}
+	ACAPI_DisposeElemMemoHdls (&memo);
+	BMKillHandle ((GSHandle *) &selNeigs);
 
 	return err;
 }
@@ -122,7 +231,6 @@ static short	DGCALLBACK	placerHandler (short message, short dialogID, short item
 
 	switch (message) {
 		case DG_MSG_INIT:
-			
 			// 다이얼로그 타이틀
 			DGSetDialogTitle (dialogID, "객체 좌표 배치");
 
@@ -136,50 +244,48 @@ static short	DGCALLBACK	placerHandler (short message, short dialogID, short item
 			ucb.type	 = APIUserControlType_Layer;
 			ucb.itemID	 = USERCONTROL_LAYER;
 			ACAPI_Interface (APIIo_SetUserControlCallbackID, &ucb, NULL);
-			DGSetItemValLong (dialogID, USERCONTROL_LAYER, 1);
+			DGSetItemValLong (dialogID, USERCONTROL_LAYER, layerInd);
 
 			// 로컬원점 - 체크박스, 버튼
 			DGSetItemText (dialogID, CHECKBOX_LOCALORIG, "로컬원점");
 			DGSetItemText (dialogID, BUTTON_SELECT_LOCALORIG, "로컬원점 선택");
-
-			// 객체선택 - 버튼
-			DGSetItemText (dialogID, BUTTON_SELECT_OBJECT, "객체 선택");
+			DGSetItemValLong (dialogID, CHECKBOX_LOCALORIG, bLocalOrigin);
 
 			// 글꼴크기 - 라벨
 			DGSetItemText (dialogID, LEFTTEXT_FONTSIZE, "글꼴 크기");
-			DGSetItemValDouble (dialogID, EDITCONTROL_FONTSIZE, 0.100);		// 기본값 100
+			DGSetItemValDouble (dialogID, EDITCONTROL_FONTSIZE, szFont);
 
 			break;
-
-		case DG_MSG_CHANGE:
-			break;
-
+		
 		case DG_MSG_CLICK:
 			switch (item) {
-				case DG_OK:			// 배치 버튼
-					// ... 만약 '객체 선택'하지 않으면 배치되지 않음
-					break;
-				
-					// 라이브러리가 없으면 직접 생성하기 ***
-
-					// 정점에다가 좌표 라이브러리 객체 배치
-
-				case DG_CANCEL:		// 종료 버튼
-					item = DG_CANCEL;
-					break;
-				
 				case BUTTON_SELECT_LOCALORIG:	// 로컬원점 선택 버튼
-					// ... 2D/3D/단면/입면/실내입면 상에서 점 클릭 가능
+					// 2D/3D/단면/입면/실내입면 상에서 점 클릭 가능
+					// 호출자에서 처리함
+					layerInd = (short)DGGetItemValLong (dialogID, USERCONTROL_LAYER);
+					if (DGGetItemValLong (dialogID, CHECKBOX_LOCALORIG) == TRUE)
+						bLocalOrigin = true;
+					else
+						bLocalOrigin = false;
+					szFont = DGGetItemValDouble (dialogID, EDITCONTROL_FONTSIZE);
 					break;
 				
-				case BUTTON_SELECT_OBJECT:		// 객체 선택 버튼
-					// 선택한 요소 가져오기
-					// ... ACAPI_Selection_Get
+				case DG_OK:			// 배치 버튼
+					// 레이어 번호
+					layerInd = (short)DGGetItemValLong (dialogID, USERCONTROL_LAYER);
 
-					// ... 꼭지점을 가져올 객체 선택
-						// 폴리라인인 경우
-						// 모프인 경우
+					// 로컬 원점인지 아닌지 여부
+					if (DGGetItemValLong (dialogID, CHECKBOX_LOCALORIG) == TRUE)
+						bLocalOrigin = true;
+					else
+						bLocalOrigin = false;
 
+					// 글꼴 크기
+					szFont = DGGetItemValDouble (dialogID, EDITCONTROL_FONTSIZE);
+
+					break;
+					
+				case DG_CANCEL:		// 종료 버튼
 					break;
 			}
 		case DG_MSG_CLOSE:
@@ -194,9 +300,8 @@ static short	DGCALLBACK	placerHandler (short message, short dialogID, short item
 	return	result;
 }
 
-/*
 // 좌표 라벨을 배치함
-GSErrCode	placeCoordinateLabel (double xPos, double yPos, double zPos, std::string comment, short layerInd, short floorInd)
+GSErrCode	placeCoordinateLabel (double xPos, double yPos, double zPos, bool bComment, std::string comment, short layerInd)
 {
 	GSErrCode	err = NoError;
 
@@ -240,9 +345,19 @@ GSErrCode	placeCoordinateLabel (double xPos, double yPos, double zPos, std::stri
 	element.object.xRatio = aParam;
 	element.object.yRatio = bParam;
 	element.header.layer = layerInd;
-	element.header.floorInd = floorInd;
-	memo.params [0][15].value.real = TRUE;
-	GS::ucscpy (memo.params [0][16].value.uStr, GS::UniString (comment.c_str ()).ToUStr ().Get ());
+	if (bLocalOrigin == true)
+		memo.params [0][8].value.real = TRUE;	// 로컬 원점 활성화
+	else
+		memo.params [0][8].value.real = FALSE;	// 로컬 원점 비활성화
+	memo.params [0][10].value.real = szFont;		// 글꼴 크기
+	memo.params [0][15].value.real = bComment;		// 코멘트 On/Off
+	GS::ucscpy (memo.params [0][16].value.uStr, GS::UniString (comment.c_str ()).ToUStr ().Get ());		// 코멘트 내용
+
+	// 로컬 원점 좌표 입력 (Examples -> LibPart_Test)
+	double** arrHdl = reinterpret_cast<double**>(memo.params [0][9].value.array);
+	(*arrHdl)[0] = localOriginPointInfo.pos.x;
+	(*arrHdl)[1] = localOriginPointInfo.pos.y;
+	(*arrHdl)[2] = localOriginPointInfo.pos.z;
 
 	// 객체 배치
 	ACAPI_Element_Create (&element, &memo);
@@ -250,4 +365,3 @@ GSErrCode	placeCoordinateLabel (double xPos, double yPos, double zPos, std::stri
 
 	return	err;
 }
-*/
