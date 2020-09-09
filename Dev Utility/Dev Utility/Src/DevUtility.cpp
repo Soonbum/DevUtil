@@ -61,6 +61,7 @@ GSErrCode __ACENV_CALL	CommandHandler (const API_MenuParams *menuParams)
 		case 32500:
 			switch (menuParams->menuItemRef.itemIndex) {
 				case 1:		err = placeCoordinateOnTarget ();		break;	// place "Coordinate" objects on vertices (target: Polyline, Morph)
+				case 2:		err = showGeometricalDataOnMorph ();	break;	// place "Coordinate" objects on Morph's vertices
 			}
 	}
 
@@ -128,7 +129,7 @@ std::string	format_string (const std::string fmt, ...)
 }
 
 // 1번 메뉴: 좌표 객체를 배치하는 통합 루틴
-GSErrCode	placeCoordinateOnTarget (void)
+GSErrCode		placeCoordinateOnTarget (void)
 {
 	GSErrCode err = NoError;
 	short	itemInd = DG_OK;
@@ -212,6 +213,93 @@ GSErrCode	placeCoordinateOnTarget (void)
 					err = placeCoordinateLabel (info3D.bounds.xMin, info3D.bounds.yMin, info3D.bounds.zMin, true, tempString, layerInd);
 					tempString = format_string ("%s", "MAX 값");
 					err = placeCoordinateLabel (info3D.bounds.xMax, info3D.bounds.yMax, info3D.bounds.zMax, true, tempString, layerInd);
+
+					return err;
+				});
+			}
+		}
+	}
+	ACAPI_DisposeElemMemoHdls (&memo);
+	BMKillHandle ((GSHandle *) &selNeigs);
+
+	return err;
+}
+
+// 2번 메뉴: 모프 객체의 기하 데이터를 좌표 객체로 보여주는 통합 루틴
+GSErrCode		showGeometricalDataOnMorph (void)
+{
+	GSErrCode err = NoError;
+	short	itemInd = DG_OK;
+	std::string		tempString;
+
+	// Selection Manager 관련 변수
+	API_SelectionInfo		selectionInfo;
+	API_Neig				**selNeigs;
+	long					nSel;
+	API_Element				elem;
+	API_ElementMemo			memo;
+	API_ElemInfo3D			info3D;
+
+	// 로컬 원점 정보
+	const char*			prompt_localorigin = "로컬 원점을 클릭하십시오.";
+	localOriginPointInfo.pos.x = 0;
+	localOriginPointInfo.pos.y = 0;
+	localOriginPointInfo.pos.z = 0;
+	layerInd = 1;
+	bLocalOrigin = false;
+	szFont = 0.100;
+
+	// 다이얼로그 호출
+	do {
+		itemInd = DGModalDialog (ACAPI_GetOwnResModule (), 32500, ACAPI_GetOwnResModule (), placerHandler, NULL);
+
+		// 로컬원점 선택 버튼
+		if (itemInd == BUTTON_SELECT_LOCALORIG) {
+			BNZeroMemory (&localOriginPointInfo, sizeof (API_GetPointType));
+			CHTruncate (prompt_localorigin, localOriginPointInfo.prompt, sizeof (localOriginPointInfo.prompt));
+			localOriginPointInfo.changeFilter = false;
+			localOriginPointInfo.changePlane  = false;
+			err = ACAPI_Interface (APIIo_GetPointID, &localOriginPointInfo, NULL);
+		}
+	} while (itemInd == BUTTON_SELECT_LOCALORIG);
+
+	if (itemInd != DG_OK)	return -1;	// 실행하지 않고 종료
+
+	// 선택한 요소 가져오기
+	err = ACAPI_Selection_Get (&selectionInfo, &selNeigs, true);
+	BMKillHandle ((GSHandle *) &selectionInfo.marquee.coords);
+	if (err == APIERR_NOSEL) {
+		ACAPI_WriteReport ("아무 것도 선택하지 않았습니다.", true);
+		return err;
+	}
+	if (err != NoError) {
+		BMKillHandle ((GSHandle *) &selNeigs);
+		return err;
+	}
+	BNZeroMemory (&elem, sizeof (API_Element));
+	BNZeroMemory (&memo, sizeof (API_ElementMemo));
+
+	// 좌표 객체 배치
+	if (selectionInfo.typeID != API_SelEmpty) {
+		nSel = BMGetHandleSize ((GSHandle) selNeigs) / sizeof (API_Neig);
+		for (int xx = 0 ; xx < nSel && err == NoError ; ++xx) {
+			elem.header.typeID = Neig_To_ElemID ((*selNeigs)[xx].neigID);
+			elem.header.guid = (*selNeigs)[xx].guid;
+
+			ACAPI_Element_Get (&elem);
+			ACAPI_Element_GetMemo (elem.header.guid, &memo);
+
+			// 모프
+			if (elem.header.typeID == API_MorphID) {
+				ACAPI_Element_Get3DInfo (elem.header, &info3D);
+
+				err = ACAPI_CallUndoableCommand ("좌표 객체 배치", [&] () -> GSErrCode {
+					tempString = format_string ("%s", "MIN 값");
+					err = placeCoordinateLabel (info3D.bounds.xMin, info3D.bounds.yMin, info3D.bounds.zMin, true, tempString, layerInd);
+					tempString = format_string ("%s", "MAX 값");
+					err = placeCoordinateLabel (info3D.bounds.xMax, info3D.bounds.yMax, info3D.bounds.zMax, true, tempString, layerInd);
+					tempString = format_string ("%s", "TMX 값 [3,7,11]");
+					err = placeCoordinateLabel (elem.morph.tranmat.tmx [3], elem.morph.tranmat.tmx [7], elem.morph.tranmat.tmx [11], true, tempString, layerInd);
 
 					return err;
 				});
