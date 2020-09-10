@@ -402,6 +402,9 @@ GSErrCode	placeCoordinateLabel (double xPos, double yPos, double zPos, bool bCom
 	double	bParam;
 	Int32	addParNum;
 
+	API_StoryInfo	storyInfo;
+	double			minusLevel;
+
 	// 라이브러리 이름 선택
 	gsmName = L("좌표 19.gsm");
 
@@ -425,11 +428,23 @@ GSErrCode	placeCoordinateLabel (double xPos, double yPos, double zPos, bool bCom
 	ACAPI_Element_GetDefaults (&element, &memo);
 	ACAPI_LibPart_GetParams (libPart.index, &aParam, &bParam, &addParNum, &memo.params);
 
+	// 작업 층 높이 반영
+	BNZeroMemory (&storyInfo, sizeof (API_StoryInfo));
+	minusLevel = 0.0;
+	ACAPI_Environment (APIEnv_GetStorySettingsID, &storyInfo);
+	for (int xx = 0 ; xx < (storyInfo.lastStory - storyInfo.firstStory) ; ++xx) {
+		if (storyInfo.data [0][xx].index == element.header.floorInd) {
+			minusLevel = storyInfo.data [0][xx].level;
+			break;
+		}
+	}
+	BMKillHandle ((GSHandle *) &storyInfo.data);
+
 	// 라이브러리의 파라미터 값 입력
 	element.object.libInd = libPart.index;
 	element.object.pos.x = xPos;
 	element.object.pos.y = yPos;
-	element.object.level = zPos;
+	element.object.level = zPos - minusLevel;
 	element.object.xRatio = aParam;
 	element.object.yRatio = bParam;
 	element.header.layer = layerInd;
