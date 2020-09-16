@@ -183,42 +183,62 @@ GSErrCode		placeCoordinateOnTarget (void)
 	BNZeroMemory (&memo, sizeof (API_ElementMemo));
 
 	// 좌표 객체 배치
-	if (selectionInfo.typeID != API_SelEmpty) {
-		nSel = BMGetHandleSize ((GSHandle) selNeigs) / sizeof (API_Neig);
-		for (int xx = 0 ; xx < nSel && err == NoError ; ++xx) {
-			elem.header.typeID = Neig_To_ElemID ((*selNeigs)[xx].neigID);
-			elem.header.guid = (*selNeigs)[xx].guid;
+	err = ACAPI_CallUndoableCommand ("좌표 객체 배치", [&] () -> GSErrCode {
+		if (selectionInfo.typeID != API_SelEmpty) {
+			nSel = BMGetHandleSize ((GSHandle) selNeigs) / sizeof (API_Neig);
+			for (int xx = 0 ; xx < nSel && err == NoError ; ++xx) {
+				elem.header.typeID = Neig_To_ElemID ((*selNeigs)[xx].neigID);
+				elem.header.guid = (*selNeigs)[xx].guid;
 
-			ACAPI_Element_Get (&elem);
-			ACAPI_Element_GetMemo (elem.header.guid, &memo);
+				ACAPI_Element_Get (&elem);
+				ACAPI_Element_GetMemo (elem.header.guid, &memo);
 
-			// 폴리라인일 경우,
-			if (elem.header.typeID == API_PolyLineID) {
-				err = ACAPI_CallUndoableCommand ("좌표 객체 배치", [&] () -> GSErrCode {
+				// 폴리라인일 경우,
+				if (elem.header.typeID == API_PolyLineID) {
 					for (int yy = 1 ; yy <= elem.polyLine.poly.nCoords ; ++yy) {
 						err = placeCoordinateLabel (memo.coords [0][yy].x, memo.coords [0][yy].y, 0, false, "", layerInd);
 					}
+				}
 
-					return err;
-				});
+				// 모프일 경우,
+				if (elem.header.typeID == API_MorphID) {
+					ACAPI_Element_Get3DInfo (elem.header, &info3D);
 
-			}
-
-			// 모프일 경우,
-			if (elem.header.typeID == API_MorphID) {
-				ACAPI_Element_Get3DInfo (elem.header, &info3D);
-
-				err = ACAPI_CallUndoableCommand ("좌표 객체 배치", [&] () -> GSErrCode {
 					tempString = format_string ("%s", "MIN 값");
 					err = placeCoordinateLabel (info3D.bounds.xMin, info3D.bounds.yMin, info3D.bounds.zMin, true, tempString, layerInd);
 					tempString = format_string ("%s", "MAX 값");
 					err = placeCoordinateLabel (info3D.bounds.xMax, info3D.bounds.yMax, info3D.bounds.zMax, true, tempString, layerInd);
+				}
 
-					return err;
-				});
+				// 선일 경우,
+				if (elem.header.typeID == API_LineID) {
+					err = placeCoordinateLabel (elem.line.begC.x, elem.line.begC.y, 0, false, tempString, layerInd);
+					err = placeCoordinateLabel (elem.line.endC.x, elem.line.endC.y, 0, false, tempString, layerInd);
+				}
+
+				// 호일 경우,
+				if (elem.header.typeID == API_ArcID) {
+					tempString = format_string ("R: %.4f, begAng: %.2f, endAng: %.2f", elem.arc.r, RadToDegree (elem.arc.begAng), RadToDegree (elem.arc.endAng));
+					err = placeCoordinateLabel (elem.arc.origC.x, elem.arc.origC.y, 0, true, tempString, layerInd);
+				}
+
+				// 원일 경우,
+				if (elem.header.typeID == API_CircleID) {
+					tempString = format_string ("R: %.4f", elem.circle.r);
+					err = placeCoordinateLabel (elem.circle.origC.x, elem.circle.origC.y, 0, true, tempString, layerInd);
+				}
+
+				// 채우기일 경우
+				if (elem.header.typeID == API_HatchID) {
+					for (int yy = 1 ; yy <= elem.hatch.poly.nCoords ; ++yy) {
+						err = placeCoordinateLabel (memo.coords [0][yy].x, memo.coords [0][yy].y, 0, false, "", layerInd);
+					}
+				}
 			}
 		}
-	}
+
+		return err;
+	});
 	ACAPI_DisposeElemMemoHdls (&memo);
 	BMKillHandle ((GSHandle *) &selNeigs);
 
@@ -467,4 +487,16 @@ GSErrCode	placeCoordinateLabel (double xPos, double yPos, double zPos, bool bCom
 	ACAPI_DisposeElemMemoHdls (&memo);
 
 	return	err;
+}
+
+// degree 각도를 radian 각도로 변환
+double	degreeToRad (double degree)
+{
+	return degree * M_PI / 180;
+}
+
+// radian 각도를 degree 각도로 변환
+double	RadToDegree (double rad)
+{
+	return rad * 180 / M_PI;
 }

@@ -40,6 +40,8 @@
 #include "Folder.hpp"
 #include "File.hpp"
 #include "FileSystem.hpp"
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #ifdef WINDOWS
 	#pragma warning (default: 4068)
@@ -65,6 +67,8 @@ GSErrCode		showGeometricalDataOnMorph (void);				// 2번 메뉴: 모프 객체의 기하 �
 static short	DGCALLBACK	placerHandler (short message, short dialogID, short item, DGUserData userData, DGMessageData msgData);		// DG 콜백 함수
 GSErrCode		placeCoordinateLabel (double xPos, double yPos, double zPos, bool bComment, std::string comment, short layerInd);		// 좌표 라벨을 배치함
 void			createCoordinateLibPart (void);																							// 좌표 라벨 라이브러리 파트가 없으면 만듦
+double	degreeToRad (double degree);							// degree 각도를 radian 각도로 변환
+double	RadToDegree (double rad);								// radian 각도를 degree 각도로 변환
 
 // 다이얼로그 항목 인덱스
 enum	idxItems {
