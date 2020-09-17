@@ -13,6 +13,7 @@
 
 static bool					bLocalOrigin;			// true이면 로컬 원점, false이면 글로벌 원점
 static double				szFont;					// 글꼴 크기
+static double				angle;					// 회전 각도
 static short				layerInd;				// 레이어 인덱스
 static API_GetPointType		localOriginPointInfo;	// 로컬 원점
 
@@ -151,6 +152,7 @@ GSErrCode		placeCoordinateOnTarget (void)
 	layerInd = 1;
 	bLocalOrigin = false;
 	szFont = 0.100;
+	angle = 0.0;
 
 	// 다이얼로그 호출
 	do {
@@ -268,6 +270,7 @@ GSErrCode		showGeometricalDataOnMorph (void)
 	layerInd = 1;
 	bLocalOrigin = false;
 	szFont = 0.100;
+	angle = 0.0;
 
 	// 다이얼로그 호출
 	do {
@@ -300,32 +303,32 @@ GSErrCode		showGeometricalDataOnMorph (void)
 	BNZeroMemory (&memo, sizeof (API_ElementMemo));
 
 	// 좌표 객체 배치
-	if (selectionInfo.typeID != API_SelEmpty) {
-		nSel = BMGetHandleSize ((GSHandle) selNeigs) / sizeof (API_Neig);
-		for (int xx = 0 ; xx < nSel && err == NoError ; ++xx) {
-			elem.header.typeID = Neig_To_ElemID ((*selNeigs)[xx].neigID);
-			elem.header.guid = (*selNeigs)[xx].guid;
+	err = ACAPI_CallUndoableCommand ("좌표 객체 배치", [&] () -> GSErrCode {
+		if (selectionInfo.typeID != API_SelEmpty) {
+			nSel = BMGetHandleSize ((GSHandle) selNeigs) / sizeof (API_Neig);
+			for (int xx = 0 ; xx < nSel && err == NoError ; ++xx) {
+				elem.header.typeID = Neig_To_ElemID ((*selNeigs)[xx].neigID);
+				elem.header.guid = (*selNeigs)[xx].guid;
 
-			ACAPI_Element_Get (&elem);
-			ACAPI_Element_GetMemo (elem.header.guid, &memo);
+				ACAPI_Element_Get (&elem);
+				ACAPI_Element_GetMemo (elem.header.guid, &memo);
 
-			// 모프
-			if (elem.header.typeID == API_MorphID) {
-				ACAPI_Element_Get3DInfo (elem.header, &info3D);
+				// 모프
+				if (elem.header.typeID == API_MorphID) {
+					ACAPI_Element_Get3DInfo (elem.header, &info3D);
 
-				err = ACAPI_CallUndoableCommand ("좌표 객체 배치", [&] () -> GSErrCode {
 					tempString = format_string ("%s", "MIN 값");
 					err = placeCoordinateLabel (info3D.bounds.xMin, info3D.bounds.yMin, info3D.bounds.zMin, true, tempString, layerInd);
 					tempString = format_string ("%s", "MAX 값");
 					err = placeCoordinateLabel (info3D.bounds.xMax, info3D.bounds.yMax, info3D.bounds.zMax, true, tempString, layerInd);
 					tempString = format_string ("%s", "TMX 값 [3,7,11]");
 					err = placeCoordinateLabel (elem.morph.tranmat.tmx [3], elem.morph.tranmat.tmx [7], elem.morph.tranmat.tmx [11], true, tempString, layerInd);
-
-					return err;
-				});
+				}
 			}
 		}
-	}
+
+		return err;
+	});
 	ACAPI_DisposeElemMemoHdls (&memo);
 	BMKillHandle ((GSHandle *) &selNeigs);
 
@@ -359,9 +362,13 @@ static short	DGCALLBACK	placerHandler (short message, short dialogID, short item
 			DGSetItemText (dialogID, BUTTON_SELECT_LOCALORIG, "로컬원점 선택");
 			DGSetItemValLong (dialogID, CHECKBOX_LOCALORIG, bLocalOrigin);
 
-			// 글꼴크기 - 라벨
+			// 글꼴크기 - 라벨, Edit 컨트롤
 			DGSetItemText (dialogID, LEFTTEXT_FONTSIZE, "글꼴 크기");
 			DGSetItemValDouble (dialogID, EDITCONTROL_FONTSIZE, szFont);
+
+			// 회전각도 - 라벨, Edit 컨트롤
+			DGSetItemText (dialogID, LEFTTEXT_ANGLE, "회전 각도");
+			DGSetItemValDouble (dialogID, EDITCONTROL_ANGLE, angle);
 
 			break;
 		
@@ -376,6 +383,7 @@ static short	DGCALLBACK	placerHandler (short message, short dialogID, short item
 					else
 						bLocalOrigin = false;
 					szFont = DGGetItemValDouble (dialogID, EDITCONTROL_FONTSIZE);
+					angle = DGGetItemValDouble (dialogID, EDITCONTROL_ANGLE);
 					break;
 				
 				case DG_OK:			// 배치 버튼
@@ -390,6 +398,9 @@ static short	DGCALLBACK	placerHandler (short message, short dialogID, short item
 
 					// 글꼴 크기
 					szFont = DGGetItemValDouble (dialogID, EDITCONTROL_FONTSIZE);
+
+					// 회전 각도
+					angle = DGGetItemValDouble (dialogID, EDITCONTROL_ANGLE);
 
 					break;
 					
@@ -467,6 +478,7 @@ GSErrCode	placeCoordinateLabel (double xPos, double yPos, double zPos, bool bCom
 	element.object.level = zPos - minusLevel;
 	element.object.xRatio = aParam;
 	element.object.yRatio = bParam;
+	element.object.angle = degreeToRad (angle);
 	element.header.layer = layerInd;
 	if (bLocalOrigin == true)
 		memo.params [0][8].value.real = TRUE;	// 로컬 원점 활성화

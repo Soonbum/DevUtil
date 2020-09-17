@@ -21,9 +21,9 @@
 }
 
 /* ---------------------------------------------------------- place "Coordinate" objects on vertices (target: Polyline, Morph) */
-'GDLG'  32500  Modal | grow	  0		  0		250		200		"Place the Coordinate Object" {
-/* [  1] */	Button			 40		145		 70		 25		LargePlain		"Place"
-/* [  2] */ Button			130		145		 70		 25		LargePlain		"Exit"
+'GDLG'  32500  Modal | grow	  0		  0		250		230		"Place the Coordinate Object" {
+/* [  1] */	Button			 40		175		 70		 25		LargePlain		"Place"
+/* [  2] */ Button			130		175		 70		 25		LargePlain		"Exit"
 
 /* [  3] */ Icon			 26		 20		 29		 14  	32502
 /* [  4] */ UserControl		 60		 15		160		 25		257	0x0006 0x0000 0		/* Layer Control */
@@ -35,4 +35,6 @@
 
 /* [  8] */ LeftText		 25		110		 70		 20		LargePlain		"Font Size"
 /* [  9] */ LengthEdit		100		105		 70		 20		LargePlain		"0.010"		"10"
+/* [ 10] */ LeftText		 25		135		 70		 20		LargePlain		"Rotation"
+/* [ 11] */ AngleEdit		100		130		 70		 20		LargePlain		"0"			"360"
 }
