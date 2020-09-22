@@ -202,16 +202,6 @@ GSErrCode		placeCoordinateOnTarget (void)
 					}
 				}
 
-				// 모프일 경우,
-				if (elem.header.typeID == API_MorphID) {
-					ACAPI_Element_Get3DInfo (elem.header, &info3D);
-
-					tempString = format_string ("%s", "MIN 값");
-					err = placeCoordinateLabel (info3D.bounds.xMin, info3D.bounds.yMin, info3D.bounds.zMin, true, tempString, layerInd);
-					tempString = format_string ("%s", "MAX 값");
-					err = placeCoordinateLabel (info3D.bounds.xMax, info3D.bounds.yMax, info3D.bounds.zMax, true, tempString, layerInd);
-				}
-
 				// 선일 경우,
 				if (elem.header.typeID == API_LineID) {
 					err = placeCoordinateLabel (elem.line.begC.x, elem.line.begC.y, 0, false, tempString, layerInd);
@@ -230,11 +220,29 @@ GSErrCode		placeCoordinateOnTarget (void)
 					err = placeCoordinateLabel (elem.circle.origC.x, elem.circle.origC.y, 0, true, tempString, layerInd);
 				}
 
-				// 채우기일 경우
+				// 채우기일 경우,
 				if (elem.header.typeID == API_HatchID) {
 					for (int yy = 1 ; yy <= elem.hatch.poly.nCoords ; ++yy) {
 						err = placeCoordinateLabel (memo.coords [0][yy].x, memo.coords [0][yy].y, 0, false, "", layerInd);
 					}
+				}
+
+				// 모프일 경우,
+				if (elem.header.typeID == API_MorphID) {
+					ACAPI_Element_Get3DInfo (elem.header, &info3D);
+
+					tempString = format_string ("%s", "MIN 값");
+					err = placeCoordinateLabel (info3D.bounds.xMin, info3D.bounds.yMin, info3D.bounds.zMin, true, tempString, layerInd);
+					tempString = format_string ("%s", "MAX 값");
+					err = placeCoordinateLabel (info3D.bounds.xMax, info3D.bounds.yMax, info3D.bounds.zMax, true, tempString, layerInd);
+				}
+
+				// 보일 경우,
+				if (elem.header.typeID == API_BeamID) {
+					tempString = format_string ("시작");
+					err = placeCoordinateLabel (elem.beam.begC.x, elem.beam.begC.y, elem.beam.level, true, tempString, layerInd);
+					tempString = format_string ("끝");
+					err = placeCoordinateLabel (elem.beam.endC.x, elem.beam.endC.y, elem.beam.level, true, tempString, layerInd);
 				}
 			}
 		}
