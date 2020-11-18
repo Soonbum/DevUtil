@@ -144,6 +144,16 @@ GSErrCode		placeCoordinateOnTarget (void)
 	API_ElementMemo			memo;
 	API_ElemInfo3D			info3D;
 
+	// 모프 3D 구성요소 가져오기
+	API_Component3D			component;
+	API_Tranmat				tm;
+	Int32					nVert, nEdge, nPgon;
+	Int32					elemIdx, bodyIdx;
+	API_Coord3D				trCoord;
+	GS::Array<API_Coord3D>&	coords = GS::Array<API_Coord3D> ();
+	long					nNodes;
+	API_Coord3D				point3D;
+
 	// 로컬 원점 정보
 	const char*			prompt_localorigin = "로컬 원점을 클릭하십시오.";
 	localOriginPointInfo.pos.x = 0;
@@ -231,10 +241,50 @@ GSErrCode		placeCoordinateOnTarget (void)
 				if (elem.header.typeID == API_MorphID) {
 					ACAPI_Element_Get3DInfo (elem.header, &info3D);
 
+					// 모프의 3D 바디를 가져옴
+					BNZeroMemory (&component, sizeof (API_Component3D));
+					component.header.typeID = API_BodyID;
+					component.header.index = info3D.fbody;
+					err = ACAPI_3D_GetComponent (&component);
+
+					// 모프의 3D 모델을 가져오지 못하면 종료
+					if (err != NoError) {
+						ACAPI_WriteReport ("모프의 3D 모델을 가져오지 못했습니다.", true);
+						return err;
+					}
+
+					nVert = component.body.nVert;
+					nEdge = component.body.nEdge;
+					nPgon = component.body.nPgon;
+					tm = component.body.tranmat;
+					elemIdx = component.body.head.elemIndex - 1;
+					bodyIdx = component.body.head.bodyIndex - 1;
+	
+					// 정점 좌표를 임의 순서대로 저장함
+					for (xx = 1 ; xx <= nVert ; ++xx) {
+						component.header.typeID	= API_VertID;
+						component.header.index	= xx;
+						err = ACAPI_3D_GetComponent (&component);
+						if (err == NoError) {
+							trCoord.x = tm.tmx[0]*component.vert.x + tm.tmx[1]*component.vert.y + tm.tmx[2]*component.vert.z + tm.tmx[3];
+							trCoord.y = tm.tmx[4]*component.vert.x + tm.tmx[5]*component.vert.y + tm.tmx[6]*component.vert.z + tm.tmx[7];
+							trCoord.z = tm.tmx[8]*component.vert.x + tm.tmx[9]*component.vert.y + tm.tmx[10]*component.vert.z + tm.tmx[11];
+							coords.Push (trCoord);
+						}
+					}
+					nNodes = coords.GetSize ();
+
 					tempString = format_string ("%s", "MIN 값");
 					err = placeCoordinateLabel (info3D.bounds.xMin, info3D.bounds.yMin, info3D.bounds.zMin, true, tempString, layerInd);
 					tempString = format_string ("%s", "MAX 값");
 					err = placeCoordinateLabel (info3D.bounds.xMax, info3D.bounds.yMax, info3D.bounds.zMax, true, tempString, layerInd);
+
+					for (xx = 1 ; xx <= nNodes ; ++xx) {
+						point3D = coords.Pop ();
+
+						tempString = format_string ("%d번", xx);
+						err = placeCoordinateLabel (point3D.x, point3D.y, point3D.z, true, tempString, layerInd);
+					}
 				}
 
 				// 보일 경우,
@@ -269,6 +319,16 @@ GSErrCode		showGeometricalDataOnMorph (void)
 	API_Element				elem;
 	API_ElementMemo			memo;
 	API_ElemInfo3D			info3D;
+
+	// 모프 3D 구성요소 가져오기
+	API_Component3D			component;
+	API_Tranmat				tm;
+	Int32					nVert, nEdge, nPgon;
+	Int32					elemIdx, bodyIdx;
+	API_Coord3D				trCoord;
+	GS::Array<API_Coord3D>&	coords = GS::Array<API_Coord3D> ();
+	long					nNodes;
+	API_Coord3D				point3D;
 
 	// 로컬 원점 정보
 	const char*			prompt_localorigin = "로컬 원점을 클릭하십시오.";
@@ -324,6 +384,51 @@ GSErrCode		showGeometricalDataOnMorph (void)
 				// 모프
 				if (elem.header.typeID == API_MorphID) {
 					ACAPI_Element_Get3DInfo (elem.header, &info3D);
+
+					// 모프의 3D 바디를 가져옴
+					BNZeroMemory (&component, sizeof (API_Component3D));
+					component.header.typeID = API_BodyID;
+					component.header.index = info3D.fbody;
+					err = ACAPI_3D_GetComponent (&component);
+
+					// 모프의 3D 모델을 가져오지 못하면 종료
+					if (err != NoError) {
+						ACAPI_WriteReport ("모프의 3D 모델을 가져오지 못했습니다.", true);
+						return err;
+					}
+
+					nVert = component.body.nVert;
+					nEdge = component.body.nEdge;
+					nPgon = component.body.nPgon;
+					tm = component.body.tranmat;
+					elemIdx = component.body.head.elemIndex - 1;
+					bodyIdx = component.body.head.bodyIndex - 1;
+	
+					// 정점 좌표를 임의 순서대로 저장함
+					for (xx = 1 ; xx <= nVert ; ++xx) {
+						component.header.typeID	= API_VertID;
+						component.header.index	= xx;
+						err = ACAPI_3D_GetComponent (&component);
+						if (err == NoError) {
+							trCoord.x = tm.tmx[0]*component.vert.x + tm.tmx[1]*component.vert.y + tm.tmx[2]*component.vert.z + tm.tmx[3];
+							trCoord.y = tm.tmx[4]*component.vert.x + tm.tmx[5]*component.vert.y + tm.tmx[6]*component.vert.z + tm.tmx[7];
+							trCoord.z = tm.tmx[8]*component.vert.x + tm.tmx[9]*component.vert.y + tm.tmx[10]*component.vert.z + tm.tmx[11];
+							coords.Push (trCoord);
+						}
+					}
+					nNodes = coords.GetSize ();
+
+					tempString = format_string ("%s", "MIN 값");
+					err = placeCoordinateLabel (info3D.bounds.xMin, info3D.bounds.yMin, info3D.bounds.zMin, true, tempString, layerInd);
+					tempString = format_string ("%s", "MAX 값");
+					err = placeCoordinateLabel (info3D.bounds.xMax, info3D.bounds.yMax, info3D.bounds.zMax, true, tempString, layerInd);
+
+					for (xx = 1 ; xx <= nNodes ; ++xx) {
+						point3D = coords.Pop ();
+
+						tempString = format_string ("%d번", xx);
+						err = placeCoordinateLabel (point3D.x, point3D.y, point3D.z, true, tempString, layerInd);
+					}
 
 					tempString = format_string ("%s", "MIN 값");
 					err = placeCoordinateLabel (info3D.bounds.xMin, info3D.bounds.yMin, info3D.bounds.zMin, true, tempString, layerInd);
